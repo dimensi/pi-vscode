@@ -86,3 +86,12 @@ See [.agents/docs/icons.md](.agents/docs/icons.md)
 - [x] 4. Add apply-workspace-edit / quick-fix execution support
 - [x] 5. Add an RPC-driven chat participant path while preserving the terminal workflow for direct Pi usage
 - [ ] 6. Consider a richer webview/session UI backed by the same RPC bridge
+
+## Fork Status (0.1.0)
+
+Personal fork changes on top of upstream v0.0.9:
+
+- **Terminal placement**: pi opens in the terminal panel (`TerminalLocation.Panel`) instead of a locked editor-area tab; `lockEditorGroup` removed
+- **`Pi: Open` focuses** an existing live `PI Code` terminal instead of always spawning a new one
+- **`Pi: Send Selection`** inserts the selection into the existing pi terminal via bracketed paste (no auto-submit); falls back to opening a new terminal with the selection as prompt. Default keybinding: `ctrl+alt+enter`
+- **Bridge discovery**: `src/bridge/discovery.ts` publishes `{pid, url, token, workspaceFolders}` to `~/.pi/agent/vscode-bridges.json` (0600, atomic write, dead PIDs pruned). `bridge/pi-vscode-bridge.js` falls back to this file when env vars are absent and deduplicates itself via a `globalThis` guard, so a copy in `~/.pi/agent/extensions/` gives externally launched pi sessions the same VS Code bridge tools (see upstream issue pithings/pi-vscode#29)

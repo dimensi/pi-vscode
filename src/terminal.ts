@@ -14,7 +14,6 @@ export async function createNewTerminal(options: {
   if (!piPath) return undefined;
 
   const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const viewColumn = findPiColumn() ?? findUnusedColumn() ?? vscode.ViewColumn.Beside;
   const extraArgs = options.sessionFile
     ? ["--session", options.sessionFile, ...(options.extraArgs ?? [])]
     : options.extraArgs;
@@ -32,7 +31,7 @@ export async function createNewTerminal(options: {
     name: TERMINAL_TITLE,
     shellPath: piPath,
     shellArgs: shellArgs.length > 0 ? shellArgs : undefined,
-    location: { viewColumn },
+    location: vscode.TerminalLocation.Panel,
     isTransient: true,
     cwd,
     env,
@@ -42,8 +41,19 @@ export async function createNewTerminal(options: {
     },
   });
 
-  void vscode.commands.executeCommand("workbench.action.lockEditorGroup");
   return terminal;
+}
+
+/** Вставка текста в работающий pi через bracketed paste, без авто-отправки. */
+export function wrapAsPaste(text: string): string {
+  return `\u001b[200~${text}\u001b[201~`;
+}
+
+/** Живой pi-терминал этого окна, если есть. */
+export function findPiTerminal(): vscode.Terminal | undefined {
+  return vscode.window.terminals.find(
+    (terminal) => terminal.name === TERMINAL_TITLE && terminal.exitStatus === undefined,
+  );
 }
 
 export function buildOpenWithFileContext(): string[] {
@@ -69,26 +79,4 @@ export function buildOpenWithFileContext(): string[] {
     `The current selection spans lines ${selection.start.line + 1}-${selection.end.line + 1}. Use the VS Code bridge to inspect the exact selected text if needed.`,
   );
   return lines;
-}
-
-function findPiColumn(): vscode.ViewColumn | undefined {
-  for (const group of vscode.window.tabGroups.all) {
-    for (const tab of group.tabs) {
-      if (tab.input instanceof vscode.TabInputTerminal && tab.label === TERMINAL_TITLE) {
-        return group.viewColumn;
-      }
-    }
-  }
-  return undefined;
-}
-
-function findUnusedColumn(): vscode.ViewColumn | undefined {
-  const used = new Set<vscode.ViewColumn>();
-  for (const group of vscode.window.tabGroups.all) {
-    if (group.viewColumn !== undefined) used.add(group.viewColumn);
-  }
-  for (let column = vscode.ViewColumn.One; column <= vscode.ViewColumn.Nine; column++) {
-    if (!used.has(column)) return column;
-  }
-  return undefined;
 }

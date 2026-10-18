@@ -1,7 +1,7 @@
 {
   "name": "pi-vscode",
   "displayName": "Pi Coding Agent",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "VS Code extension for pi coding agent",
   "categories": [
     "AI",
@@ -145,6 +145,10 @@
       {
         "command": "pi-vscode.open",
         "key": "ctrl+alt+3"
+      },
+      {
+        "command": "pi-vscode.sendSelection",
+        "key": "ctrl+alt+enter"
       }
     ]
   },

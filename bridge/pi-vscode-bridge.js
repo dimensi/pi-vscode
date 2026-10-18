@@ -1,8 +1,61 @@
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
+const DISCOVERY_PATH = path.join(os.homedir(), ".pi", "agent", "vscode-bridges.json");
+
+function isPidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === "EPERM";
+  }
+}
+
+/** Найти мост живого окна VS Code в discovery-файле (для внешних pi-процессов). */
+function discoverBridge() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(DISCOVERY_PATH, "utf8"));
+    const entries = Array.isArray(parsed?.bridges) ? parsed.bridges : [];
+    const alive = entries.filter(
+      (entry) =>
+        typeof entry?.url === "string" &&
+        typeof entry?.token === "string" &&
+        typeof entry?.pid === "number" &&
+        isPidAlive(entry.pid),
+    );
+    if (alive.length === 0) return undefined;
+    const cwd = process.cwd();
+    const inWorkspace = (entry) =>
+      (entry.workspaceFolders ?? []).some((folder) => {
+        const root = folder.endsWith(path.sep) ? folder : folder + path.sep;
+        return folder === cwd || cwd.startsWith(root);
+      });
+    alive.sort(
+      (a, b) => Number(inWorkspace(b)) - Number(inWorkspace(a)) || (b.ts ?? 0) - (a.ts ?? 0),
+    );
+    return alive[0];
+  } catch {
+    return undefined;
+  }
+}
+
 export default function (pi) {
-  const bridgeUrl = process.env.PI_VSCODE_BRIDGE_URL;
-  const bridgeToken = process.env.PI_VSCODE_BRIDGE_TOKEN;
+  // Копия моста может быть загружена дважды (bundled --extension + ~/.pi/agent/extensions) — оставляем первую.
+  if (globalThis.__PI_VSCODE_BRIDGE_LOADED__) return;
+  globalThis.__PI_VSCODE_BRIDGE_LOADED__ = true;
+
+  let bridgeUrl = process.env.PI_VSCODE_BRIDGE_URL;
+  let bridgeToken = process.env.PI_VSCODE_BRIDGE_TOKEN;
+
+  if ((!bridgeUrl || !bridgeToken) && process.env.PI_VSCODE_BRIDGE !== "0") {
+    const discovered = discoverBridge();
+    if (discovered) {
+      bridgeUrl = discovered.url;
+      bridgeToken = discovered.token;
+    }
+  }
 
   if (!bridgeUrl || !bridgeToken) return;
 

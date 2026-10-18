@@ -6,7 +6,13 @@ import { TERMINAL_TITLE } from "./constants.ts";
 import { createPiEnvironment, createPiShellArgs, findPiBinary, upgradePiBinary } from "./pi.ts";
 import { createPackagesViewProvider } from "./packages.ts";
 import { createSessionTracker } from "./sessions.ts";
-import { buildOpenWithFileContext, createNewTerminal } from "./terminal.ts";
+import { publishBridgeEntry, removeBridgeEntry } from "./bridge/discovery.ts";
+import {
+  buildOpenWithFileContext,
+  createNewTerminal,
+  findPiTerminal,
+  wrapAsPaste,
+} from "./terminal.ts";
 
 let extensionUri: vscode.Uri;
 let bridgeConfig: { url: string; token: string } | undefined;
@@ -20,7 +26,16 @@ export async function activate(context: vscode.ExtensionContext) {
     sessions.update(terminalId, sessionFile);
   });
   bridgeConfig = { url: bridge.url, token: bridge.token };
-  bridgeDispose = () => bridge.dispose();
+  publishBridgeEntry({
+    pid: process.pid,
+    url: bridge.url,
+    token: bridge.token,
+    workspaceFolders: (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath),
+  });
+  bridgeDispose = () => {
+    removeBridgeEntry(process.pid);
+    return bridge.dispose();
+  };
   context.subscriptions.push({
     dispose: () => {
       const dispose = bridgeDispose;
@@ -70,6 +85,11 @@ export async function activate(context: vscode.ExtensionContext) {
     statusBarItem,
     vscode.window.onDidCloseTerminal((terminal) => sessions.onClose(terminal)),
     vscode.commands.registerCommand("pi-vscode.open", async () => {
+      const existing = findPiTerminal();
+      if (existing) {
+        existing.show();
+        return;
+      }
       const terminal = await openTerminal();
       terminal?.show();
     }),
@@ -82,6 +102,12 @@ export async function activate(context: vscode.ExtensionContext) {
       if (!editor) return;
       const selection = editor.document.getText(editor.selection);
       if (!selection) return;
+      const existing = findPiTerminal();
+      if (existing) {
+        existing.show();
+        existing.sendText(wrapAsPaste(selection), false);
+        return;
+      }
       const terminal = await openTerminal([selection]);
       terminal?.show();
     }),
