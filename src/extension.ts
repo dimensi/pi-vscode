@@ -6,6 +6,7 @@ import { TERMINAL_TITLE } from "./constants.ts";
 import { createPiEnvironment, createPiShellArgs, findPiBinary, upgradePiBinary } from "./pi.ts";
 import { createPackagesViewProvider } from "./packages.ts";
 import { createSessionTracker } from "./sessions.ts";
+import { createSidebarChatProvider } from "./sidebarChat.ts";
 import { publishBridgeEntry, removeBridgeEntry } from "./bridge/discovery.ts";
 import {
   buildOpenWithFileContext,
@@ -117,10 +118,22 @@ export async function activate(context: vscode.ExtensionContext) {
       terminal.show();
       await vscode.commands.executeCommand("workbench.action.moveEditorToNewWindow");
     }),
+    vscode.commands.registerCommand("pi-vscode.openChat", async () => {
+      try {
+        await vscode.commands.executeCommand("pi-vscode.chat.focus");
+      } catch {
+        await vscode.commands.executeCommand("workbench.action.focusAuxiliaryBar");
+      }
+    }),
     vscode.commands.registerCommand("pi-vscode.upgrade", upgradePiBinary),
     vscode.window.registerWebviewViewProvider(
       "pi-vscode.packages",
       createPackagesViewProvider(findPiBinary),
+    ),
+    vscode.window.registerWebviewViewProvider(
+      "pi-vscode.chat",
+      createSidebarChatProvider({ extensionUri, getBridgeConfig: () => bridgeConfig }),
+      { webviewOptions: { retainContextWhenHidden: true } },
     ),
     vscode.window.registerTerminalProfileProvider("pi-vscode.terminal-profile", {
       provideTerminalProfile() {

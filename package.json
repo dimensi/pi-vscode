@@ -1,7 +1,7 @@
 {
   "name": "pi-vscode",
   "displayName": "Pi Coding Agent",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "VS Code extension for pi coding agent",
   "categories": [
     "AI",
@@ -78,6 +78,10 @@
         "title": "Pi: Send Selection"
       },
       {
+        "command": "pi-vscode.openChat",
+        "title": "Pi: Open Chat"
+      },
+      {
         "command": "pi-vscode.upgrade",
         "title": "Pi: Upgrade Pi and Packages"
       },
@@ -120,6 +124,13 @@
           "title": "Pi",
           "icon": "assets/logo.svg"
         }
+      ],
+      "secondarySidebar": [
+        {
+          "id": "pi-side",
+          "title": "Pi",
+          "icon": "assets/logo.svg"
+        }
       ]
     },
     "views": {
@@ -128,6 +139,13 @@
           "type": "webview",
           "id": "pi-vscode.packages",
           "name": "Packages"
+        }
+      ],
+      "pi-side": [
+        {
+          "type": "webview",
+          "id": "pi-vscode.chat",
+          "name": "Chat"
         }
       ]
     },
@@ -143,7 +161,7 @@
     },
     "keybindings": [
       {
-        "command": "pi-vscode.open",
+        "command": "pi-vscode.openChat",
         "key": "ctrl+alt+3"
       },
       {
