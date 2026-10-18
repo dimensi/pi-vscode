@@ -29,7 +29,7 @@ export function createChatHandler(options: {
         piPath,
         message,
         token,
-        onDelta: (delta) => stream.markdown(delta),
+        stream,
         extensionUri: options.extensionUri,
         bridgeConfig: options.getBridgeConfig(),
       });
@@ -48,13 +48,13 @@ export function createChatHandler(options: {
   };
 }
 
-export async function runPiRpcPrompt(options: {
+async function runPiRpcPrompt(options: {
   piPath: string;
   message: string;
   token: vscode.CancellationToken;
-  onDelta: (delta: string) => void;
+  stream: vscode.ChatResponseStream;
   extensionUri: vscode.Uri;
-  bridgeConfig?: { url: string; token: string } | undefined;
+  bridgeConfig?: { url: string; token: string };
 }): Promise<{ hadOutput: boolean }> {
   const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   const child = spawn(options.piPath, createPiRpcArgs(options.extensionUri), {
@@ -134,7 +134,7 @@ export async function runPiRpcPrompt(options: {
             typeof assistantMessageEvent.delta === "string"
           ) {
             hadOutput = true;
-            options.onDelta(assistantMessageEvent.delta);
+            options.stream.markdown(assistantMessageEvent.delta);
           }
           return;
         }
