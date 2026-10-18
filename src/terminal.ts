@@ -31,7 +31,7 @@ export async function createNewTerminal(options: {
     name: TERMINAL_TITLE,
     shellPath: piPath,
     shellArgs: shellArgs.length > 0 ? shellArgs : undefined,
-    location: vscode.TerminalLocation.Panel,
+    location: { viewColumn: vscode.ViewColumn.Beside },
     isTransient: true,
     cwd,
     env,
