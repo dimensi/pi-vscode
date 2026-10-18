@@ -91,7 +91,7 @@ See [.agents/docs/icons.md](.agents/docs/icons.md)
 
 Personal fork changes on top of upstream v0.0.9:
 
-- **Terminal placement**: pi opens as a regular editor-area tab beside (`ViewColumn.Beside`) instead of a locked/pinned one; `lockEditorGroup` removed (0.1.1)
+- **Terminal placement**: pi opens in the terminal panel list (`TerminalLocation.Panel`), no editor-area tab and no `lockEditorGroup` (0.2.2)
 - **`Pi: Open` focuses** an existing live `PI Code` terminal instead of always spawning a new one
 - **`Pi: Send Selection`** inserts the selection into the existing pi terminal via bracketed paste (no auto-submit); falls back to opening a new terminal with the selection as prompt. Default keybinding: `ctrl+alt+enter`
 - **Bridge discovery**: `src/bridge/discovery.ts` publishes `{pid, url, token, workspaceFolders}` to `~/.pi/agent/vscode-bridges.json` (0600, atomic write, dead PIDs pruned). `bridge/pi-vscode-bridge.js` falls back to this file when env vars are absent and deduplicates itself via a `globalThis` guard, so a copy in `~/.pi/agent/extensions/` gives externally launched pi sessions the same VS Code bridge tools (see upstream issue pithings/pi-vscode#29)
